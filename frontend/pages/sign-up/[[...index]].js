@@ -16,7 +16,7 @@ export default function Page() {
   return (
     <main className="container stack gap">
       <div className="card">
-        <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" afterSignUpUrl="/" />
+        <SignUp routing="hash" signInUrl="/sign-in" afterSignUpUrl="/" />
       </div>
     </main>
   );
