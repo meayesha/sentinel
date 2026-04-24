@@ -31,9 +31,9 @@ locals {
   name_prefix = "sentinel"
 
   common_tags = {
-    Project     = "sentinel"
-    Part        = "7_frontend"
-    ManagedBy   = "terraform"
+    Project   = "sentinel"
+    Part      = "7_frontend"
+    ManagedBy = "terraform"
   }
 }
 
@@ -41,6 +41,29 @@ locals {
 resource "aws_s3_bucket" "frontend" {
   bucket = var.frontend_bucket_name
   tags   = local.common_tags
+}
+
+resource "aws_s3_bucket" "api_artifacts" {
+  bucket = "${local.name_prefix}-api-artifacts-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+  tags   = local.common_tags
+}
+
+resource "aws_s3_bucket_public_access_block" "api_artifacts" {
+  bucket = aws_s3_bucket.api_artifacts.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_object" "api_lambda_zip" {
+  bucket = aws_s3_bucket.api_artifacts.id
+  key    = "lambda/sentinel-api/api_lambda.zip"
+  source = var.api_lambda_zip
+  etag   = filemd5(var.api_lambda_zip)
+
+  depends_on = [aws_s3_bucket_public_access_block.api_artifacts]
 }
 
 
@@ -72,10 +95,10 @@ resource "aws_s3_bucket_policy" "frontend_public" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Effect = "Allow",
+      Effect    = "Allow",
       Principal = "*",
-      Action = ["s3:GetObject"],
-      Resource = ["${aws_s3_bucket.frontend.arn}/*"]
+      Action    = ["s3:GetObject"],
+      Resource  = ["${aws_s3_bucket.frontend.arn}/*"]
     }]
   })
 
@@ -89,9 +112,9 @@ resource "aws_iam_role" "api_lambda_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Service = "lambda.amazonaws.com" }
-      Action = "sts:AssumeRole"
+      Action    = "sts:AssumeRole"
     }]
   })
 }
@@ -131,15 +154,16 @@ resource "aws_iam_role_policy" "api_lambda_aurora_data_api" {
 }
 
 resource "aws_lambda_function" "api" {
-  function_name = var.api_lambda_name
-  role          = aws_iam_role.api_lambda_role.arn
-  runtime       = "python3.12"
-  handler       = "api.lambda_handler.handler"
-  filename      = var.api_lambda_zip
+  function_name    = var.api_lambda_name
+  role             = aws_iam_role.api_lambda_role.arn
+  runtime          = "python3.12"
+  handler          = "api.lambda_handler.handler"
+  s3_bucket        = aws_s3_bucket.api_artifacts.id
+  s3_key           = aws_s3_object.api_lambda_zip.key
   source_code_hash = filebase64sha256(var.api_lambda_zip)
-  timeout       = 60
-  memory_size   = 1024
-  tags = local.common_tags
+  timeout          = 60
+  memory_size      = 1024
+  tags             = local.common_tags
 
   environment {
     variables = {
@@ -161,6 +185,22 @@ resource "aws_lambda_function" "api" {
 
       # CORS configuration consumed by the FastAPI app
       ALLOWED_ORIGINS = "http://localhost:3000,https://${aws_cloudfront_distribution.frontend.domain_name}"
+
+      USE_BEDROCK = "true"
+      USE_OPEN_ROUTER = "false"
+
+      BEDROCK_MODEL_ID = var.bedrock_model_id
+      BEDROCK_REGION = var.bedrock_region
+
+      OPENROUTER_API_KEY = var.openrouter_api_key
+      OPENROUTER_MODEL = var.openrouter_model     
+      OPENROUTER_BASE_URL = var.openrouter_base_url 
+
+
+      RESEND_API_KEY = var.resend_api_key
+      RESEND_FROM = var.resend_from
+      REMINDER_INTERVAL_SECONDS = var.reminder_interval_seconds
+
     }
   }
 

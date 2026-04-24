@@ -31,8 +31,10 @@ output "setup_instructions" {
     1. If you deployed manually (not using scripts/deploy.py):
        a. Build and deploy the frontend:
           cd frontend
-          npm run build
+          NEXT_PUBLIC_API_URL=${aws_apigatewayv2_stage.default.invoke_url} npm run build
           aws s3 sync out/ s3://${aws_s3_bucket.frontend.id}/ --delete
+          # Or from the repo root:
+          # cd scripts && uv run deploy.py
 
        b. Invalidate CloudFront cache:
           aws cloudfront create-invalidation \
