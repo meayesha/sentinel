@@ -1,9 +1,1 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js",
-  "/audit": "pages/audit.js",
-  "/analyze": "pages/analyze.js",
-  "/live": "pages/live.js",
-  "/dashboard": "pages/dashboard.js"
-}
+{"/_app":"pages/_app.js","/analyze":"pages/analyze.html","/_error":"pages/_error.js","/live":"pages/live.html","/dashboard":"pages/dashboard.html","/audit":"pages/audit.html","/":"pages/index.html","/sign-up":"pages/sign-up.html","/sign-in":"pages/sign-in.html","/settings":"pages/settings.html","/_document":"pages/_document.js","/404":"pages/404.html"}
