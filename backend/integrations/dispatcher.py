@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 
@@ -30,7 +31,8 @@ def _public_job_url(job_id: str) -> str | None:
     base = (os.getenv("SENTINEL_PUBLIC_URL") or os.getenv("NEXT_PUBLIC_APP_URL") or "").strip().rstrip("/")
     if not base:
         return None
-    return f"{base}/dashboard?job={job_id}"
+    q = urlencode({"job": job_id})
+    return f"{base}/dashboard?{q}"
 
 
 def _analysis_payload(

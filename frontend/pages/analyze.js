@@ -218,10 +218,11 @@ function HomeContent({ getToken = null, userProfile = null }) {
     if (!bulkPollIds?.length) return undefined;
 
     const jobIds = bulkPollIds;
-    let intervalId;
     let cancelled = false;
+    let timeoutId;
 
-    async function pollOnce() {
+    async function pollLoop() {
+      if (cancelled) return;
       const token = clerkEnabled && getToken ? await getToken() : null;
       const updates = {};
       await Promise.all(
@@ -243,18 +244,15 @@ function HomeContent({ getToken = null, userProfile = null }) {
 
       const terminal = new Set(["completed", "failed"]);
       const allDone = jobIds.every((id) => terminal.has(updates[id]?.status));
-      if (allDone && intervalId) {
-        clearInterval(intervalId);
-        intervalId = undefined;
-      }
+      if (allDone) return;
+      timeoutId = setTimeout(pollLoop, 2500);
     }
 
-    intervalId = setInterval(pollOnce, 2500);
-    pollOnce();
+    pollLoop();
 
     return () => {
       cancelled = true;
-      if (intervalId) clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [(bulkPollIds || []).join("|"), clerkEnabled, getToken]);
 

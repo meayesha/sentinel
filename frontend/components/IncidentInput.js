@@ -123,7 +123,10 @@ export default function IncidentInput({
             <span className="content-warn__title-icon">🚫</span>
             <strong className="content-warn__title">Submission rejected by server</strong>
           </div>
-          <p className="content-warn__issue-detail" style={{ margin: "0.25rem 0 0 2rem" }}>
+          <p
+            className="content-warn__issue-detail"
+            style={{ margin: "0.25rem 0 0 2rem", whiteSpace: "pre-wrap" }}
+          >
             {submitError}
           </p>
         </div>

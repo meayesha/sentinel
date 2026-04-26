@@ -2,7 +2,7 @@
 
 Run from ``backend/``::
 
-    WEBHOOK_URL=https://webhook.site/<your-uuid> uv run python -m integrations.manual_dispatch_test
+    WEBHOOK_URL=https://webhook.site/<your-uuid> uv run python -m integrations.manual_dispatch
 
 Optional::
 
@@ -39,7 +39,7 @@ def _sample_analysis() -> IncidentAnalysis:
         root_cause=RootCauseAnalysis(
             likely_root_cause="Not applicable — test dispatch only",
             confidence="low",
-            reasoning="manual_dispatch_test",
+            reasoning="integrations.manual_dispatch",
         ),
         remediation=RemediationPlan(
             recommended_actions=["Verify webhook received this payload", "Check server logs"],

@@ -59,6 +59,22 @@ def test_bulk_zip_rejects_injection_when_only_macosx_member(auth_off: None) -> N
     assert r.json()["detail"]["error"] == "bulk_zip_validation_failed"
 
 
+def test_bulk_zip_rejects_too_many_archive_members(auth_off: None) -> None:
+    from api import main as api_main
+    from api.main import app
+
+    cap = api_main._BULK_ZIP_MAX_MEMBER_FILES
+    entries = [(f"n{i}.txt", b"ok\n") for i in range(cap + 1)]
+    payload = _zip_bytes(entries)
+    client = TestClient(app)
+    r = client.post(
+        "/api/incidents/bulk-zip",
+        files={"archive": ("huge.zip", payload, "application/zip")},
+    )
+    assert r.status_code == 400
+    assert "too many entries" in (r.json().get("detail") or "").lower()
+
+
 def test_bulk_zip_accepts_raw_application_zip_body(auth_off: None) -> None:
     """Scripts may POST raw zip bytes with Content-Type: application/zip (no multipart)."""
     from api.main import app

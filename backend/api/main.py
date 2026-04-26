@@ -487,6 +487,10 @@ def _zip_entry_is_macos_metadata(norm_path: str, leaf_name: str) -> bool:
     return "__MACOSX" in norm_path or leaf_name.startswith("._")
 
 
+# Cap ZIP entry count before reading bodies — avoids huge archives exhausting CPU/memory.
+_BULK_ZIP_MAX_MEMBER_FILES = 400
+
+
 @app.post("/api/incidents/bulk-zip")
 async def create_incidents_bulk_zip(
     request: Request,
@@ -538,6 +542,14 @@ async def create_incidents_bulk_zip(
             members = [m for m in zf.infolist() if not m.is_dir()]
             if not members:
                 raise HTTPException(status_code=400, detail="Zip file contains no files.")
+            if len(members) > _BULK_ZIP_MAX_MEMBER_FILES:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"ZIP contains too many entries ({len(members)}). "
+                        f"Maximum {_BULK_ZIP_MAX_MEMBER_FILES} files per archive."
+                    ),
+                )
 
             # Decode every small text-like member for (1) whole-archive guardrails
             # including paths we do not ingest (e.g. __MACOSX — must still scan for injection),

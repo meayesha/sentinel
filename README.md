@@ -270,6 +270,7 @@ On **`/`** (Analyze), choose **Upload ZIP (bulk)**. The client sends `multipart/
 | **Multipart** | Form field name must be **`archive`** (see [backend/test_bulk_zip_api.py](backend/test_bulk_zip_api.py)). |
 | **Raw body** | You may instead POST the raw ZIP bytes with `Content-Type: application/zip` (or `application/octet-stream`) for scripts. |
 | **Query** | `source` (default `upload`), optional `title_prefix` (prepended to each incident title), `max_files` (default **25**, max **100**). |
+| **Archive size (entries)** | Archives with more than **400** file entries are rejected (**400**) before reading bodies, to bound CPU/memory on pathological zips. |
 | **Ingested extensions** | `.txt`, `.log`, `.json`, `.ndjson`, `.md`, `.csv` |
 | **Per-file size** | Members larger than **500 KB** are skipped (not ingested). |
 | **Finder metadata** | Paths under **`__MACOSX`** and AppleDouble `._*` files are not ingested as incidents but are **still scanned** for hidden threats; a bad payload there fails the **whole** archive. |
@@ -301,7 +302,9 @@ The server `POST`s JSON to your URL. Top-level fields include:
 - **`severity`**, **`summary`**, **`severity_reason`**, root cause fields, **`recommended_actions`**, **`next_checks`**, **`risk_if_unresolved`**
 - **`dashboard_url`** — Absolute link when `SENTINEL_PUBLIC_URL` / `NEXT_PUBLIC_APP_URL` is set; otherwise `null`.
 
-Dispatch runs from the same **`run_job`** path used locally and on **Lambda** (planner packages `common/` and `integrations/`). After changing integration code, **redeploy** the Lambdas that run the pipeline (see [AWS deployment](#aws-deployment)).
+**Manual smoke test** (from `backend/`): `WEBHOOK_URL=https://… uv run python -m integrations.manual_dispatch` (optional `INTEGRATION_TYPE=slack`, `INCIDENT_TITLE`, `INCIDENT_SOURCE`).
+
+Dispatch runs from the same **`run_job`** path used locally and on **Lambda**. Packaging scripts include `common/` and `integrations/` but **skip** `test_*.py` / `*_test.py` so pytest modules are not shipped in deployment zips. After changing integration code, **redeploy** the Lambdas that run the pipeline (see [AWS deployment](#aws-deployment)).
 
 ---
 
