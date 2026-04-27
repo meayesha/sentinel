@@ -101,7 +101,7 @@ function SettingsContent({ tokenProvider = null }) {
         return;
       }
       const data = await fetchIntegrations(token);
-      setIntegrations(data);
+      setIntegrations(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message || "Failed to load integrations");
     }
@@ -127,7 +127,7 @@ function SettingsContent({ tokenProvider = null }) {
         return;
       }
       await deleteIntegration(id, token);
-      setIntegrations((prev) => prev.filter((i) => i.id !== id));
+      setIntegrations((prev) => prev.filter((i) => (i.id || i.integration_id) !== id));
     } catch (err) {
       setError(err.message || "Failed to delete");
     }
@@ -146,9 +146,6 @@ function SettingsContent({ tokenProvider = null }) {
       {error ? <p className="error compact" style={{ marginBottom: 16 }}>{error}</p> : null}
 
       <h2 style={{ marginBottom: 16 }}>Integrations</h2>
-      <p className="muted small" style={{ marginBottom: 16 }}>
-        When a high or critical incident is detected, Sentinel will automatically notify configured integrations.
-      </p>
 
       <IntegrationForm onSave={handleSave} />
 
@@ -158,7 +155,7 @@ function SettingsContent({ tokenProvider = null }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {integrations.map((int) => (
             <div
-              key={int.id}
+              key={int.id || int.integration_id}
               className="card-elevated"
               style={{
                 padding: "14px 18px",
@@ -191,7 +188,7 @@ function SettingsContent({ tokenProvider = null }) {
                 type="button"
                 className="btn btn-muted"
                 style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
-                onClick={() => handleDelete(int.id)}
+                onClick={() => handleDelete(int.id || int.integration_id)}
               >
                 Remove
               </button>
